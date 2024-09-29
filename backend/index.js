@@ -1,31 +1,26 @@
 const express = require('express');
 const { ApolloServer } = require('apollo-server-express');
-const mongoose = require('mongoose');
+const sequelize = require('./config/db');
 
 const typeDefs = require('./graphql/typeDefs');
 const resolvers = require('./graphql/resolvers');
+const morgan = require('morgan');
 
 const app = express();
-
-mongoose
-  .connect('mongodb://localhost:27017/movieshare', {
-    useNewUrlParser: true,
-    useUnifiedTopology: true
-  })
-  .then(() => console.log('MongoDB connected'))
-  .catch(err => console.log(err));
-
+app.use(morgan('dev'));
 const server = new ApolloServer({
   typeDefs,
-  resolvers
+  resolvers,
 });
 
 server.start().then(() => {
   server.applyMiddleware({ app });
 
-  app.listen(4000, () => {
-    console.log(
-      `Server is running at http://localhost:4000${server.graphqlPath}`
-    );
+  sequelize.sync().then(() => {
+    app.listen(4000, () => {
+      console.log(
+        `Server is running at http://localhost:4000${server.graphqlPath}`
+      );
+    });
   });
 });

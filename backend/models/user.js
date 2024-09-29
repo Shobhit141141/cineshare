@@ -1,9 +1,32 @@
-const mongoose = require('mongoose');
+const { DataTypes } = require('sequelize');
+const sequelize = require('../config/db');
+const Movie = require('./Movie');
 
-const userSchema = new mongoose.Schema({
-  name: { type: String, required: true },
-  email: { type: String, required: true, unique: true },
-  favoriteMovies: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Movie' }]
-});
+const User = sequelize.define(
+  'User',
+  {
+    id: {
+      type: DataTypes.UUID,
+      defaultValue: DataTypes.UUIDV4,
+      allowNull: false,
+      primaryKey: true,
+    },
+    name: {
+      type: DataTypes.STRING,
+      allowNull: false,
+    },
+    email: {
+      type: DataTypes.STRING,
+      allowNull: false,
+      unique: true,
+    },
+  },
+  {
+    timestamps: true,
+  }
+);
 
-module.exports = mongoose.model('User', userSchema);
+User.belongsToMany(Movie, { through: 'FavoriteMovies', as: 'favoriteMovies' });
+Movie.belongsToMany(User, { through: 'FavoriteMovies', as: 'users' });
+
+module.exports = User;

@@ -1,17 +1,19 @@
-const Movie = require('../models/movie');
-const User = require('../models/user');
+const Movie = require('../models/Movie');
+const User = require('../models/User');
 
 const resolvers = {
   Query: {
     getMovies: async () => {
-      return await Movie.find();
+      return await Movie.findAll();
     },
     getMovie: async (_, { id }) => {
-      return await Movie.findById(id);
+      return await Movie.findByPk(id);
     },
     getUser: async (_, { id }) => {
-      return await User.findById(id).populate('favoriteMovies');
-    }
+      return await User.findByPk(id, {
+        include: [Movie],
+      });
+    },
   },
 
   Mutation: {
@@ -19,47 +21,56 @@ const resolvers = {
       _,
       { title, description, director, releaseDate, rating }
     ) => {
-      const newMovie = new Movie({
+      return await Movie.create({
         title,
         description,
         director,
         releaseDate,
-        rating
+        rating,
       });
-      return await newMovie.save();
     },
     updateMovie: async (
       _,
       { id, title, description, director, releaseDate, rating }
     ) => {
-      return await Movie.findByIdAndUpdate(
-        id,
-        { title, description, director, releaseDate, rating },
-        { new: true }
-      );
+      const movie = await Movie.findByPk(id);
+      if (movie) {
+        movie.title = title;
+        movie.description = description;
+        movie.director = director;
+        movie.releaseDate = releaseDate;
+        movie.rating = rating;
+        await movie.save();
+        return movie;
+      }
+      throw new Error('Movie not found');
     },
     deleteMovie: async (_, { id }) => {
-      await Movie.findByIdAndDelete(id);
-      return 'Movie deleted';
+      const movie = await Movie.findByPk(id);
+      if (movie) {
+        await movie.destroy();
+        return 'Movie deleted';
+      }
+      throw new Error('Movie not found');
     },
 
     createUser: async (_, { name, email }) => {
-      const newUser = new User({ name, email });
-      return await newUser.save();
+      return await User.create({ name, email });
     },
 
     addFavoriteMovie: async (_, { userId, movieId }) => {
-      const user = await User.findById(userId);
-      const movie = await Movie.findById(movieId);
-
+      const user = await User.findByPk(userId);
+      const movie = await Movie.findByPk(movieId);
       if (user && movie) {
-        user.favoriteMovies.push(movieId);
-        await user.save();
+        await user.addMovie(movie);
+        return await User.findByPk(userId, {
+          include: [Movie],
+        });
       }
 
-      return await User.findById(userId).populate('favoriteMovies');
-    }
-  }
+      throw new Error('User or Movie not found');
+    },
+  },
 };
 
 module.exports = resolvers;
