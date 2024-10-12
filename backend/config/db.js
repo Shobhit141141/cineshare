@@ -1,24 +1,26 @@
 const { Sequelize } = require('sequelize');
 
-require('dotenv').config(); // Load environment variables from a .env file
+require('dotenv').config();
 const sequelize = new Sequelize(
-  process.env.DB_NAME, // Database name
-  process.env.DB_USER, // Database username
-  process.env.DB_PASSWORD, // Database password
+  process.env.DB_NAME,
+  process.env.DB_USER,
+
+
+  // these are some more changes to test the system
+  process.env.DB_PASSWORD,
   {
-    host: process.env.DB_HOST, // Aiven PostgreSQL host
-    port: process.env.DB_PORT || 5432, // Port (default is 5432)
-    dialect: 'postgres', // Database dialect
+    host: process.env.DB_HOST,
+    port: process.env.DB_PORT || 5432,
+    dialect: 'postgres',
     dialectOptions: {
       ssl: {
         require: false,
-        rejectUnauthorized: false, // Disable certificate validation if necessary
+        rejectUnauthorized: false,
       },
     },
   }
 );
 
-// Test the connection
 sequelize
   .authenticate()
   .then(() => console.log('Connected to Aiven PostgreSQL'))
